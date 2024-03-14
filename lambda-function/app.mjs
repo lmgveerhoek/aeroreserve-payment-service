@@ -43,6 +43,8 @@ export const lambdaHandler = async (event, context) => {
   const secret = JSON.parse(data.SecretString);
   const { username, password, host } = secret;
 
+  
+
   const response = {
     statusCode: 200,
     body: JSON.stringify({
