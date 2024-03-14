@@ -3,7 +3,7 @@ Transform: AWS::Serverless-2016-10-31
 Description: >
   aeroreserve-payment-service
 
-  Sample SAM Template for aeroreserve-payment-service
+  SAM Template for aeroreserve-payment-service
 
 # More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
 Globals:
@@ -17,7 +17,7 @@ Globals:
   Api:
     TracingEnabled: true
 Resources:
-  HelloWorldFunction:
+  AeroReservePaymentServiceFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
       CodeUri: lambda-function/
@@ -26,11 +26,17 @@ Resources:
       Architectures:
       - x86_64
       Events:
-        HelloWorld:
-          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+        MQEvent:
+          Type: MQ
           Properties:
-            Path: /hello
-            Method: get
+            Broker: arn:aws:mq:eu-north-1:058264113652:broker:aeroreserve-rabbitmq-broker:b-27a704de-08bd-4dd1-98a7-7c7a10a18f19
+            Queues: 
+              - paymentRequest
+            SourceAccessConfigurations:
+              - Type: BASIC_AUTH
+                URI: arn:aws:secretsmanager:eu-north-1:058264113652:secret:rabbitmq-credentials-4QltZn
+            BatchSize: 200
+            Enabled: true
 
   ApplicationResourceGroup:
     Type: AWS::ResourceGroups::Group
@@ -49,12 +55,12 @@ Outputs:
   # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
   # Find out more about other implicit resources you can reference within SAM
   # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
-  HelloWorldApi:
-    Description: API Gateway endpoint URL for Prod stage for Hello World function
+  AeroReservePaymentServiceApi:
+    Description: API Gateway endpoint URL for Prod stage for AeroReservePaymentService function
     Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/hello/"
-  HelloWorldFunction:
-    Description: Hello World Lambda Function ARN
-    Value: !GetAtt HelloWorldFunction.Arn
-  HelloWorldFunctionIamRole:
-    Description: Implicit IAM Role created for Hello World function
-    Value: !GetAtt HelloWorldFunctionRole.Arn
+  AeroReservePaymentServiceFunction:
+    Description: AeroReservePaymentService Lambda Function ARN
+    Value: !GetAtt AeroReservePaymentServiceFunction.Arn
+  AeroReservePaymentServiceFunctionIamRole:
+    Description: Implicit IAM Role created for AeroReservePaymentService function
+    Value: !GetAtt AeroReservePaymentServiceFunctionRole.Arn

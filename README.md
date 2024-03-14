@@ -66,7 +66,7 @@ Test a single function by invoking it directly with a test event. An event is a 
 Run functions locally and invoke them with the `sam local invoke` command.
 
 ```bash
-aeroreserve-payment-service$ sam local invoke HelloWorldFunction --event events/event.json
+aeroreserve-payment-service$ sam local invoke AeroReservePaymentServiceFunction --event events/event.json
 ```
 
 The SAM CLI can also emulate your application's API. Use the `sam local start-api` to run the API locally on port 3000.
@@ -80,7 +80,7 @@ The SAM CLI reads the application template to determine the API's routes and the
 
 ```yaml
       Events:
-        HelloWorld:
+        AeroReservePaymentService:
           Type: Api
           Properties:
             Path: /hello
@@ -97,7 +97,7 @@ To simplify troubleshooting, SAM CLI has a command called `sam logs`. `sam logs`
 `NOTE`: This command works for all AWS Lambda functions; not just the ones you deploy using SAM.
 
 ```bash
-aeroreserve-payment-service$ sam logs -n HelloWorldFunction --stack-name aeroreserve-payment-service --tail
+aeroreserve-payment-service$ sam logs -n AeroReservePaymentServiceFunction --stack-name aeroreserve-payment-service --tail
 ```
 
 You can find more information and examples about filtering Lambda function logs in the [SAM CLI Documentation](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-sam-cli-logging.html).
@@ -119,9 +119,3 @@ To delete the sample application that you created, use the AWS CLI. Assuming you
 ```bash
 sam delete --stack-name aeroreserve-payment-service
 ```
-
-## Resources
-
-See the [AWS SAM developer guide](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/what-is-sam.html) for an introduction to SAM specification, the SAM CLI, and serverless application concepts.
-
-Next, you can use AWS Serverless Application Repository to deploy ready to use Apps that go beyond hello world samples and learn how authors developed their applications: [AWS Serverless Application Repository main page](https://aws.amazon.com/serverless/serverlessrepo/)
