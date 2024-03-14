@@ -36,14 +36,16 @@ export const lambdaHandler = async (event, context) => {
     // For a list of exceptions thrown, see
     // https://docs.aws.amazon.com/secretsmanager/latest/apireference/API_GetSecretValue.html
     // Log the error
-    console.error(error);
-    throw error;
+    return {
+      statusCode: 500,
+      body: JSON.stringify({
+        message: `Error retrieving RabbitMQ credentials: \n ${error}`,
+      }),
+    }
   }
 
   const secret = JSON.parse(data.SecretString);
   const { username, password, host } = secret;
-
-  
 
   const response = {
     statusCode: 200,
