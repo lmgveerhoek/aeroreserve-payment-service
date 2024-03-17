@@ -78,7 +78,7 @@ export const lambdaHandler = async (event, context) => {
         paymentConfirmationId,
       });
 
-      await queue.publish(queuePaymentResponse);
+      await queue.publish(outputMessage);
       console.log(
         `Sent payment confirmation ${paymentConfirmationId} for payment request ${paymentRequestId}`
       );
