@@ -67,7 +67,10 @@ export const lambdaHandler = async (event, context) => {
     // Assuming the event contains messages from the queue
     console.log(event.rmqMessagesByQueue[`${queuePaymentRequest}::/`]);
     const messages = event.rmqMessagesByQueue[`${queuePaymentRequest}::/`].map(
-      (message) => message.data
+      (message) => {
+        // Decode the Base64 encoded message
+        return Buffer.from(message.data, "base64").toString();
+      }
     );
 
 
