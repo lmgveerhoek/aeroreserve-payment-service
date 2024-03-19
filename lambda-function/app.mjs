@@ -65,9 +65,11 @@ export const lambdaHandler = async (event, context) => {
     console.log("Connected to RabbitMQ server");
 
     // Assuming the event contains messages from the queue
+    console.log(event.rmqMessagesByQueue[`${queuePaymentRequest}::/`]);
     const messages = event.rmqMessagesByQueue[`${queuePaymentRequest}::/`].map(
       (message) => message.data
     );
+
 
     // Process and respond to each message
     messages.forEach(async (message) => {
