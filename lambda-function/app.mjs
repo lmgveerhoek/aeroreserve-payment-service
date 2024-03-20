@@ -28,30 +28,31 @@ const secretsClient = new SecretsManagerClient({
 const queuePaymentRequest = "paymentRequest";
 const queuePaymentResponse = "paymentResponse";
 
+let data;
+
+// Retrieve secret for RabbitMQ credentials
+try {
+  data = await secretsClient.send(
+    new GetSecretValueCommand({
+      SecretId: secret_name,
+    })
+  );
+} catch (error) {
+  // For a list of exceptions thrown, see
+  // https://docs.aws.amazon.com/secretsmanager/latest/apireference/API_GetSecretValue.html
+  // Log the error
+  return {
+    statusCode: 500,
+    body: JSON.stringify({
+      message: `Error retrieving RabbitMQ credentials: \n ${error}`,
+    }),
+  };
+}
+
+const secret = JSON.parse(data.SecretString);
+const { username, password, host } = secret;
+
 export const lambdaHandler = async (event, context) => {
-  let data;
-
-  // Retrieve secret for RabbitMQ credentials
-  try {
-    data = await secretsClient.send(
-      new GetSecretValueCommand({
-        SecretId: secret_name,
-      })
-    );
-  } catch (error) {
-    // For a list of exceptions thrown, see
-    // https://docs.aws.amazon.com/secretsmanager/latest/apireference/API_GetSecretValue.html
-    // Log the error
-    return {
-      statusCode: 500,
-      body: JSON.stringify({
-        message: `Error retrieving RabbitMQ credentials: \n ${error}`,
-      }),
-    };
-  }
-
-  const secret = JSON.parse(data.SecretString);
-  const { username, password, host } = secret;
 
   // Connect to RabbitMQ server
   const amqp = new AMQPClient(`amqps://${username}:${password}@${host}`);
@@ -65,14 +66,12 @@ export const lambdaHandler = async (event, context) => {
     console.log("Connected to RabbitMQ server");
 
     // Assuming the event contains messages from the queue
-    console.log(event.rmqMessagesByQueue[`${queuePaymentRequest}::/`]);
     const messages = event.rmqMessagesByQueue[`${queuePaymentRequest}::/`].map(
       (message) => {
         // Decode the Base64 encoded message
         return Buffer.from(message.data, "base64").toString();
       }
     );
-
 
     // Process and respond to each message
     messages.forEach(async (message) => {
@@ -95,7 +94,7 @@ export const lambdaHandler = async (event, context) => {
 
     return {
       statusCode: 200,
-      body: JSON.stringify({ message: `Processed messages successfully` }),
+      body: JSON.stringify({ message: `Processed ${messages.count} messages successfully` }),
     };
   } catch (err) {
     console.error(err);
