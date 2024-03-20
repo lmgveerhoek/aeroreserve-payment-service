@@ -41,12 +41,7 @@ try {
   // For a list of exceptions thrown, see
   // https://docs.aws.amazon.com/secretsmanager/latest/apireference/API_GetSecretValue.html
   // Log the error
-  return {
-    statusCode: 500,
-    body: JSON.stringify({
-      message: `Error retrieving RabbitMQ credentials: \n ${error}`,
-    }),
-  };
+  console.log(`Error retrieving secret: ${error}`);
 }
 
 const secret = JSON.parse(data.SecretString);
