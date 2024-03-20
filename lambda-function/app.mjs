@@ -45,14 +45,39 @@ try {
 }
 
 const secret = JSON.parse(data.SecretString);
-const { username, password, host } = secret;
+
+let amqpConnection = null;
+
+async function getAmqpConnection({ username, password, host }) {
+  if (!amqpConnection) {
+    const amqpClient = new AMQPClient(`amqps://${username}:${password}@${host}`);
+    amqpConnection = await amqpClient.connect();
+  }
+  return amqpConnection;
+}
+
+async function processMessages(messages, queue) {
+  return Promise.all(
+    messages.map(async (message) => {
+      const paymentRequestId = message;
+      const paymentConfirmationId = uuidv4();
+      const outputMessage = JSON.stringify({
+        paymentRequestId,
+        paymentConfirmationId,
+      });
+
+      await queue.publish(outputMessage);
+      console.log(
+        `Sent payment confirmation ${paymentConfirmationId} for payment request ${paymentRequestId}`
+      );
+    })
+  );
+}
 
 export const lambdaHandler = async (event, context) => {
-
-  // Connect to RabbitMQ server
-  const amqp = new AMQPClient(`amqps://${username}:${password}@${host}`);
   try {
-    const conn = await amqp.connect();
+    // Connect to RabbitMQ server
+    const conn = await getAmqpConnection(secret);
 
     // Create a channel and assert the queue
     const channel = await conn.channel();
@@ -69,34 +94,19 @@ export const lambdaHandler = async (event, context) => {
     );
 
     // Process and respond to each message
-    messages.forEach(async (message) => {
-      const paymentRequestId = message;
-      const paymentConfirmationId = uuidv4();
-      const outputMessage = JSON.stringify({
-        paymentRequestId,
-        paymentConfirmationId,
-      });
-
-      await queue.publish(outputMessage);
-      console.log(
-        `Sent payment confirmation ${paymentConfirmationId} for payment request ${paymentRequestId}`
-      );
-    });
+    await processMessages(messages, queue);
 
     // Close the channel and the connection
     await channel.close();
-    await conn.close();
+    // await conn.close();
 
-    return {
-      statusCode: 200,
-      body: JSON.stringify({ message: `Processed ${messages.count} messages successfully` }),
-    };
+    console.log(`Processed ${messages.length} messages successfully`);
+
   } catch (err) {
     console.error(err);
-    err.connection.close();
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ message: "Failed to process messages" }),
-    };
+    if (err.connection) {
+      await err.connection.close();
+    }
+    console.error("Failed to process messages");
   }
 };

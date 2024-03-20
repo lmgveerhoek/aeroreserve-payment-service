@@ -35,7 +35,7 @@ Resources:
             SourceAccessConfigurations:
               - Type: BASIC_AUTH
                 URI: arn:aws:secretsmanager:eu-north-1:058264113652:secret:rabbitmq-credentials-4QltZn
-            BatchSize: 1
+            BatchSize: 20
             Enabled: true
 
   ApplicationResourceGroup:
