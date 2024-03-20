@@ -47,13 +47,18 @@ try {
 const secret = JSON.parse(data.SecretString);
 
 let amqpConnection = null;
+let amqpChannel = null;
+let amqpQueue = null;
 
 async function getAmqpConnection({ username, password, host }) {
-  if (!amqpConnection) {
+  if (!amqpQueue) {
     const amqpClient = new AMQPClient(`amqps://${username}:${password}@${host}`);
     amqpConnection = await amqpClient.connect();
+    // Create a channel and assert the queue
+    amqpChannel = await amqpConnection.channel();
+    amqpQueue = await amqpChannel.queue(queuePaymentResponse, { durable: true });
   }
-  return amqpConnection;
+  return amqpQueue;
 }
 
 async function processMessages(messages, queue) {
@@ -77,11 +82,7 @@ async function processMessages(messages, queue) {
 export const lambdaHandler = async (event, context) => {
   try {
     // Connect to RabbitMQ server
-    const conn = await getAmqpConnection(secret);
-
-    // Create a channel and assert the queue
-    const channel = await conn.channel();
-    const queue = await channel.queue(queuePaymentResponse, { durable: true });
+    const queue = await getAmqpConnection(secret);
 
     console.log("Connected to RabbitMQ server");
 
@@ -97,7 +98,7 @@ export const lambdaHandler = async (event, context) => {
     await processMessages(messages, queue);
 
     // Close the channel and the connection
-    await channel.close();
+    // await channel.close();
     // await conn.close();
 
     console.log(`Processed ${messages.length} messages successfully`);
@@ -110,3 +111,15 @@ export const lambdaHandler = async (event, context) => {
     console.error("Failed to process messages");
   }
 };
+
+process.on('SIGTERM', async () => {
+  console.info('[runtime] SIGTERM received');
+
+  console.info('[runtime] cleaning up');
+  // perform actual clean up work here. 
+  await amqpChannel.close();
+  await amqpConnection.close();
+
+  console.info('[runtime] exiting');
+  process.exit(0)
+});
